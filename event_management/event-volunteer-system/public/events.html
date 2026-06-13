@@ -60,6 +60,33 @@
         </div>
     </main>
 
+    <!-- Event Detail Modal -->
+    <div id="eventDetailModal" class="fixed inset-0 z-50 hidden bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 opacity-0 transition-opacity duration-200">
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-2xl overflow-hidden transform scale-95 transition-transform duration-200 flex flex-col max-h-[90vh]" id="eventDetailModalContent">
+            <div class="relative h-64 w-full flex-shrink-0">
+                <img id="modalEventImage" src="" alt="Event" class="w-full h-full object-cover">
+                <button id="closeModalBtnTop" class="absolute top-4 right-4 bg-black/40 hover:bg-black/60 text-white rounded-full p-2 backdrop-blur-md transition">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <div class="p-6 overflow-y-auto">
+                <span id="modalEventTag" class="text-xs font-bold text-indigo-600 uppercase tracking-wider mb-2 block"></span>
+                <h2 id="modalEventTitle" class="text-2xl font-bold text-slate-900 mb-2"></h2>
+                <div class="text-slate-500 text-sm flex items-center gap-2 mb-4">
+                    <i data-lucide="calendar" class="w-4 h-4"></i> <span id="modalEventDate"></span>
+                </div>
+                <p class="text-slate-600 mb-6 leading-relaxed">
+                    Join us for this amazing volunteer opportunity. Your help will make a significant impact on our community. Please review the details and sign up if you are available! (This is a placeholder description for the event. In a full system, this would come
+                    from a database.)
+                </p>
+                <div class="flex justify-end gap-3 pt-4 border-t border-slate-100">
+                    <button id="closeModalBtnBottom" class="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition">Cancel</button>
+                    <button id="modalSignUpBtn" class="px-6 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 shadow-sm transition">Sign Up to Volunteer</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         // Generate 30 Event Cards Dynamically
         const eventsGrid = document.getElementById('events-grid');
@@ -81,7 +108,7 @@
 
             htmlContent += `
                 <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden hover:shadow-lg transition-shadow duration-300 flex flex-col">
-                    <img src="https://picsum.photos/seed/${randomSeed}/400/200" alt="${title}" class="w-full h-40 object-cover border-b border-slate-100">
+                    <img src="https://picsum.photos/seed/${randomSeed}/400/200" alt="${title}" class="w-full h-40 object-cover border-b border-slate-100 cursor-pointer hover:opacity-90 transition" onclick="openEventModal(${i}, '${title}', ${day}, ${randomSeed})">
                     <div class="p-5 flex flex-col flex-grow">
                         <span class="text-xs font-bold text-indigo-600 uppercase tracking-wider mb-1">Event #${i}</span>
                         <h3 class="text-lg font-bold text-slate-900 leading-tight mb-2">${title}</h3>
@@ -89,7 +116,7 @@
                             <i data-lucide="calendar" class="w-4 h-4"></i> Oct ${day}, 2026
                         </div>
                         <div class="mt-auto pt-4 border-t border-slate-100">
-                            <button class="w-full bg-indigo-50 text-indigo-700 py-2 rounded-lg font-medium text-sm hover:bg-indigo-100 transition">Sign Up to Volunteer</button>
+                            <button onclick="window.location.href='login.html?event_id=${i}&event_title=${encodeURIComponent(title)}'" class="w-full bg-indigo-50 text-indigo-700 py-2 rounded-lg font-medium text-sm hover:bg-indigo-100 transition">Sign Up to Volunteer</button>
                         </div>
                     </div>
                 </div>
@@ -97,6 +124,43 @@
         }
 
         eventsGrid.innerHTML = htmlContent;
+
+        // Modal functionality
+        const modal = document.getElementById('eventDetailModal');
+        const modalContent = document.getElementById('eventDetailModalContent');
+        const signUpBtn = document.getElementById('modalSignUpBtn');
+
+        function openEventModal(id, title, day, seed) {
+            // Set Modal Data
+            document.getElementById('modalEventImage').src = `https://picsum.photos/seed/${seed}/800/400`;
+            document.getElementById('modalEventTag').textContent = `Event #${id}`;
+            document.getElementById('modalEventTitle').textContent = title;
+            document.getElementById('modalEventDate').textContent = `Oct ${day}, 2026`;
+
+            // Bind the correct event parameters to the modal's Sign Up button
+            signUpBtn.onclick = () => {
+                window.location.href = `login.html?event_id=${id}&event_title=${encodeURIComponent(title)}`;
+            };
+
+            // Display Modal with animation
+            modal.classList.remove('hidden');
+            void modal.offsetWidth; // Trigger reflow
+            modal.classList.remove('opacity-0');
+            modalContent.classList.remove('scale-95');
+        }
+
+        function closeEventModal() {
+            modal.classList.add('opacity-0');
+            modalContent.classList.add('scale-95');
+            setTimeout(() => modal.classList.add('hidden'), 200);
+        }
+
+        document.getElementById('closeModalBtnTop').addEventListener('click', closeEventModal);
+        document.getElementById('closeModalBtnBottom').addEventListener('click', closeEventModal);
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) closeEventModal();
+        });
+
         lucide.createIcons();
     </script>
 </body>

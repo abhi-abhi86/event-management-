@@ -41,8 +41,8 @@
     <div class="w-full lg:w-1/2 flex items-center justify-center p-8 bg-slate-50">
         <div class="w-full max-w-md space-y-8 bg-white p-10 rounded-2xl shadow-sm border border-slate-200">
             <div class="text-center">
-                <h2 class="text-2xl font-bold text-slate-900">Welcome back</h2>
-                <p class="text-sm text-slate-500 mt-2">Please enter your details to sign in.</p>
+                <h2 id="login-heading" class="text-2xl font-bold text-slate-900">Welcome back</h2>
+                <p id="login-subtext" class="text-sm text-slate-500 mt-2">Please enter your details to sign in.</p>
             </div>
 
             <!-- User Type Toggle Section -->
@@ -96,11 +96,29 @@
 
     <script>
         lucide.createIcons();
+        let currentRole = 'volunteer'; // Default role
+
+        // Check for event parameters in URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const eventId = urlParams.get('event_id');
+        const eventTitle = urlParams.get('event_title');
+
+        if (eventId && eventTitle) {
+            document.getElementById('login-heading').textContent = 'Sign in to Register';
+            document.getElementById('login-subtext').textContent = `You are signing up for: ${eventTitle}`;
+        }
 
         // Handle Login Submission
         document.getElementById('loginForm').addEventListener('submit', function(e) {
             e.preventDefault(); // Prevent default form submission
             localStorage.setItem('isLoggedIn', 'true'); // Set a simple login token
+            localStorage.setItem('userRole', currentRole); // Store the selected role
+
+            if (currentRole === 'volunteer' && eventId) {
+                // In a real app, this would send an API request to register the volunteer for the event.
+                alert(`Successfully logged in and registered for event: ${eventTitle}!`);
+            }
+
             window.location.href = 'index.html'; // Redirect to dashboard
         });
 
@@ -108,14 +126,20 @@
         const tabVolunteer = document.getElementById('tab-volunteer');
         const tabAdmin = document.getElementById('tab-admin');
 
+        // Initialize active tab visual
+        tabVolunteer.className = 'w-1/2 py-2 text-sm font-medium rounded-md bg-white shadow text-slate-900 transition';
+        tabAdmin.className = 'w-1/2 py-2 text-sm font-medium rounded-md text-slate-500 hover:text-slate-700 transition';
+
         tabVolunteer.addEventListener('click', () => {
             tabVolunteer.className = 'w-1/2 py-2 text-sm font-medium rounded-md bg-white shadow text-slate-900 transition';
             tabAdmin.className = 'w-1/2 py-2 text-sm font-medium rounded-md text-slate-500 hover:text-slate-700 transition';
+            currentRole = 'volunteer';
         });
 
         tabAdmin.addEventListener('click', () => {
             tabAdmin.className = 'w-1/2 py-2 text-sm font-medium rounded-md bg-white shadow text-slate-900 transition';
             tabVolunteer.className = 'w-1/2 py-2 text-sm font-medium rounded-md text-slate-500 hover:text-slate-700 transition';
+            currentRole = 'admin';
         });
     </script>
 </body>

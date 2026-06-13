@@ -17,29 +17,42 @@
     <!-- Tailwind Config -->
     <script>
         tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
-                    },
-                    colors: {
-                        brand: {
-                            50: '#eef2ff',
-                            100: '#e0e7ff',
-                            500: '#6366f1',
-                            600: '#4f46e5',
-                            700: '#4338ca',
+                theme: {
+                    extend: {
+                        fontFamily: {
+                            sans: ['Inter', 'sans-serif'],
+                        },
+                        colors: {
+                            brand: {
+                                50: '#eef2ff',
+                                100: '#e0e7ff',
+                                500: '#6366f1',
+                                600: '#4f46e5',
+                                700: '#4338ca',
+                            }
                         }
                     }
                 }
             }
-        }
-
-        // Simple Authentication Check
-        // If the user hasn't logged in, redirect them back to the login page.
+            // Simple Authentication Check
+            // If the user hasn't logged in, redirect them back to the login page.
         if (localStorage.getItem('isLoggedIn') !== 'true') {
             window.location.href = 'login.html';
         }
+
+        // Read user role from localStorage
+        const userRole = localStorage.getItem('userRole');
+
+        // --- Frontend-only simulation of admin permissions ---
+        // This part needs a backend for real security.
+        document.addEventListener('DOMContentLoaded', () => {
+            if (userRole !== 'admin') {
+                // Hide admin-specific buttons
+                const adminButtons = document.querySelectorAll('#exportCsvBtn, #openRegisterModalBtn');
+                adminButtons.forEach(button => button.style.display = 'none');
+                // For table actions (delete, approve/accept), app.js would need to check userRole
+            }
+        });
     </script>
 </head>
 

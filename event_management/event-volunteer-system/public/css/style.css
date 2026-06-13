@@ -1,0 +1,52 @@
+/* Base Styles */
+body { 
+    font-family: 'Inter', sans-serif; 
+    background-color: #f8fafc; 
+}
+
+/* Toast Animations */
+.toast-enter { 
+    transform: translateY(100%); 
+    opacity: 0; 
+}
+.toast-enter-active { 
+    transform: translateY(0); 
+    opacity: 1; 
+    transition: all 300ms ease-out; 
+}
+.toast-exit { 
+    transform: translateY(0); 
+    opacity: 1; 
+}
+.toast-exit-active { 
+    transform: translateY(-100%); 
+    opacity: 0; 
+    transition: all 300ms ease-in; 
+}
+
+/* Modal Animations */
+.modal-enter { 
+    opacity: 0; 
+    scale: 0.95; 
+}
+.modal-enter-active { 
+    opacity: 1; 
+    scale: 1; 
+    transition: all 200ms ease-out; 
+}
+
+/* Scrollbar Styles */
+::-webkit-scrollbar { 
+    width: 8px; 
+    height: 8px; 
+}
+::-webkit-scrollbar-track { 
+    background: transparent; 
+}
+::-webkit-scrollbar-thumb { 
+    background: #cbd5e1; 
+    border-radius: 4px; 
+}
+::-webkit-scrollbar-thumb:hover { 
+    background: #94a3b8; 
+}

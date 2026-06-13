@@ -48,9 +48,16 @@
         document.addEventListener('DOMContentLoaded', () => {
             if (userRole !== 'admin') {
                 // Hide admin-specific buttons
-                const adminButtons = document.querySelectorAll('#exportCsvBtn, #openRegisterModalBtn');
+                const adminButtons = document.querySelectorAll('#exportCsvBtn, #openRegisterModalBtn, #adminRegLink');
                 adminButtons.forEach(button => button.style.display = 'none');
-                // For table actions (delete, approve/accept), app.js would need to check userRole
+
+                // Hide the actions table header
+                const actionsHeader = document.getElementById('actionsHeader');
+                if (actionsHeader) actionsHeader.style.display = 'none';
+
+                // Update the dashboard subtitle for volunteers
+                const dashboardSubtitle = document.getElementById('dashboardSubtitle');
+                if (dashboardSubtitle) dashboardSubtitle.innerText = 'View upcoming shifts and volunteer status.';
             }
         });
     </script>
@@ -67,6 +74,7 @@
                 </a>
                 <div class="flex items-center gap-4">
                     <a href="events.html" class="text-sm font-medium hover:text-indigo-200 transition hidden sm:block mr-2">Browse Events</a>
+                    <a href="admin-registrations.html" id="adminRegLink" class="text-sm font-medium hover:text-indigo-200 transition hidden sm:block mr-2">View Registrations</a>
                     <button id="logoutBtn" class="text-sm font-medium text-indigo-100 hover:text-white bg-indigo-700/50 hover:bg-indigo-700 px-3 py-1.5 rounded-md transition mr-2">Logout</button>
                     <button class="p-2 rounded-full hover:bg-indigo-700 transition"><i data-lucide="bell" class="w-5 h-5"></i></button>
                     <div class="w-8 h-8 rounded-full bg-indigo-400 border-2 border-indigo-300 overflow-hidden">
@@ -82,7 +90,7 @@
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
             <div>
                 <h1 class="text-2xl font-bold text-slate-900">Volunteer Dashboard</h1>
-                <p class="text-slate-500 text-sm mt-1">Manage event volunteers, shifts, and approvals.</p>
+                <p id="dashboardSubtitle" class="text-slate-500 text-sm mt-1">Manage event volunteers, shifts, and approvals.</p>
             </div>
             <div class="flex items-center gap-3">
                 <button id="exportCsvBtn" class="flex items-center gap-2 bg-white border border-slate-300 text-slate-700 px-4 py-2 rounded-lg hover:bg-slate-50 transition shadow-sm font-medium text-sm">
@@ -155,7 +163,7 @@
                             <th class="px-6 py-4 font-medium">Volunteer</th>
                             <th class="px-6 py-4 font-medium">Role</th>
                             <th class="px-6 py-4 font-medium">Status</th>
-                            <th class="px-6 py-4 font-medium text-right">Actions</th>
+                            <th id="actionsHeader" class="px-6 py-4 font-medium text-right">Actions</th>
                         </tr>
                     </thead>
                     <tbody id="volunteerTableBody" class="divide-y divide-slate-100 text-sm">

@@ -98,6 +98,24 @@
         lucide.createIcons();
         let currentRole = 'volunteer'; // Default role
 
+        // Initialize 40 dummy volunteers if not present
+        function initVolunteerData() {
+            if (!localStorage.getItem('registeredVolunteers')) {
+                const events = ['Community Park Cleanup', 'Local Food Drive', 'Marathon Route Guide', 'Tech Conference Helper', 'Charity Gala Assistant', 'Animal Shelter Support', 'Youth Sports Day', 'Neighborhood Block Party', 'Beach Restoration', 'Library Reading Buddy'];
+                const vols = [];
+                // Add 80 dummy records
+                for (let i = 1; i <= 80; i++) {
+                    vols.push({
+                        email: `volunteer${i}@example.com`,
+                        eventTitle: events[i % events.length],
+                        date: new Date(Date.now() - Math.floor(Math.random() * 10000000000)).toLocaleDateString()
+                    });
+                }
+                localStorage.setItem('registeredVolunteers', JSON.stringify(vols));
+            }
+        }
+        initVolunteerData();
+
         // Check for event parameters in URL
         const urlParams = new URLSearchParams(window.location.search);
         const eventId = urlParams.get('event_id');
@@ -111,12 +129,222 @@
         // Handle Login Submission
         document.getElementById('loginForm').addEventListener('submit', function(e) {
             e.preventDefault(); // Prevent default form submission
+            const email = document.getElementById('email').value;
             localStorage.setItem('isLoggedIn', 'true'); // Set a simple login token
             localStorage.setItem('userRole', currentRole); // Store the selected role
+            localStorage.setItem('userEmail', email); // Store logged-in user's email
 
-            if (currentRole === 'volunteer' && eventId) {
-                // In a real app, this would send an API request to register the volunteer for the event.
-                alert(`Successfully logged in and registered for event: ${eventTitle}!`);
+            if (currentRole === 'volunteer') {
+                const vols = JSON.parse(localStorage.getItem('registeredVolunteers') || '[]');
+                vols.push({
+                    email: email,
+                    eventTitle: eventTitle ? eventTitle : 'General Dashboard Login',
+                    date: new Date().toLocaleDateString()
+                });
+                localStorage.setItem('registeredVolunteers', JSON.stringify(vols));
+
+                // Add to dashboard volunteers list
+                let eventflowVols = JSON.parse(localStorage.getItem('eventflow_volunteers'));
+                if (!eventflowVols) {
+                    eventflowVols = [{
+                        id: '1',
+                        name: 'Alice Smith',
+                        email: 'alice@example.com',
+                        role: 'Registration Desk',
+                        status: 'Approved'
+                    }, {
+                        id: '2',
+                        name: 'Bob Johnson',
+                        email: 'bob@example.com',
+                        role: 'Crowd Control',
+                        status: 'Pending'
+                    }, {
+                        id: '3',
+                        name: 'Charlie Davis',
+                        email: 'charlie@example.com',
+                        role: 'Stage Hand',
+                        status: 'Rejected'
+                    }, {
+                        id: '4',
+                        name: 'Diana Evans',
+                        email: 'diana@example.com',
+                        role: 'Runner',
+                        status: 'Approved'
+                    }, {
+                        id: '5',
+                        name: 'Ethan Ford',
+                        email: 'ethan@example.com',
+                        role: 'Technical Support',
+                        status: 'Approved'
+                    }, {
+                        id: '6',
+                        name: 'Fiona Garcia',
+                        email: 'fiona@example.com',
+                        role: 'Usher',
+                        status: 'Pending'
+                    }, {
+                        id: '7',
+                        name: 'George Harris',
+                        email: 'george@example.com',
+                        role: 'First Aid',
+                        status: 'Approved'
+                    }, {
+                        id: '8',
+                        name: 'Hannah Irving',
+                        email: 'hannah@example.com',
+                        role: 'Information Booth',
+                        status: 'Approved'
+                    }, {
+                        id: '9',
+                        name: 'Ian Jones',
+                        email: 'ian@example.com',
+                        role: 'Parking Attendant',
+                        status: 'Pending'
+                    }, {
+                        id: '10',
+                        name: 'Julia King',
+                        email: 'julia@example.com',
+                        role: 'VIP Escort',
+                        status: 'Approved'
+                    }, {
+                        id: '11',
+                        name: 'Kevin Lee',
+                        email: 'kevin@example.com',
+                        role: 'Registration Desk',
+                        status: 'Pending'
+                    }, {
+                        id: '12',
+                        name: 'Laura Miller',
+                        email: 'laura@example.com',
+                        role: 'Crowd Control',
+                        status: 'Approved'
+                    }, {
+                        id: '13',
+                        name: 'Mike Nelson',
+                        email: 'mike@example.com',
+                        role: 'Stage Hand',
+                        status: 'Approved'
+                    }, {
+                        id: '14',
+                        name: 'Nina Owen',
+                        email: 'nina@example.com',
+                        role: 'Runner',
+                        status: 'Rejected'
+                    }, {
+                        id: '15',
+                        name: 'Oscar Perez',
+                        email: 'oscar@example.com',
+                        role: 'Technical Support',
+                        status: 'Approved'
+                    }, {
+                        id: '16',
+                        name: 'Paula Quinn',
+                        email: 'paula@example.com',
+                        role: 'Usher',
+                        status: 'Pending'
+                    }, {
+                        id: '17',
+                        name: 'Quinn Roberts',
+                        email: 'quinn@example.com',
+                        role: 'First Aid',
+                        status: 'Approved'
+                    }, {
+                        id: '18',
+                        name: 'Rachel Scott',
+                        email: 'rachel@example.com',
+                        role: 'Information Booth',
+                        status: 'Pending'
+                    }, {
+                        id: '19',
+                        name: 'Sam Taylor',
+                        email: 'sam@example.com',
+                        role: 'Parking Attendant',
+                        status: 'Approved'
+                    }, {
+                        id: '20',
+                        name: 'Tina Underwood',
+                        email: 'tina@example.com',
+                        role: 'VIP Escort',
+                        status: 'Approved'
+                    }, {
+                        id: '21',
+                        name: 'Umar Vargas',
+                        email: 'umar@example.com',
+                        role: 'Registration Desk',
+                        status: 'Rejected'
+                    }, {
+                        id: '22',
+                        name: 'Victor White',
+                        email: 'victor@example.com',
+                        role: 'Crowd Control',
+                        status: 'Approved'
+                    }, {
+                        id: '23',
+                        name: 'Wendy Xavier',
+                        email: 'wendy@example.com',
+                        role: 'Stage Hand',
+                        status: 'Pending'
+                    }, {
+                        id: '24',
+                        name: 'Xavier Young',
+                        email: 'xavier@example.com',
+                        role: 'Runner',
+                        status: 'Approved'
+                    }, {
+                        id: '25',
+                        name: 'Yara Zane',
+                        email: 'yara@example.com',
+                        role: 'Technical Support',
+                        status: 'Pending'
+                    }, {
+                        id: '26',
+                        name: 'Zack Adams',
+                        email: 'zack@example.com',
+                        role: 'Usher',
+                        status: 'Approved'
+                    }, {
+                        id: '27',
+                        name: 'Amy Baker',
+                        email: 'amy@example.com',
+                        role: 'First Aid',
+                        status: 'Rejected'
+                    }, {
+                        id: '28',
+                        name: 'Brian Clark',
+                        email: 'brian@example.com',
+                        role: 'Information Booth',
+                        status: 'Approved'
+                    }, {
+                        id: '29',
+                        name: 'Chloe Diaz',
+                        email: 'chloe@example.com',
+                        role: 'Parking Attendant',
+                        status: 'Pending'
+                    }, {
+                        id: '30',
+                        name: 'Daniel Ellis',
+                        email: 'daniel@example.com',
+                        role: 'VIP Escort',
+                        status: 'Approved'
+                    }];
+                }
+
+                if (!eventflowVols.some(v => v.email === email)) {
+                    const nameParts = email.split('@')[0].split(/[\.\-_]/);
+                    const name = nameParts.map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(' ');
+                    eventflowVols.unshift({
+                        id: Date.now().toString(),
+                        name: name,
+                        email: email,
+                        role: eventTitle ? eventTitle : 'Volunteer',
+                        status: 'Pending'
+                    });
+                    localStorage.setItem('eventflow_volunteers', JSON.stringify(eventflowVols));
+                }
+
+                if (eventId) {
+                    alert(`Successfully logged in and registered for event: ${eventTitle}!`);
+                }
             }
 
             window.location.href = 'index.html'; // Redirect to dashboard

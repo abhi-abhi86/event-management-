@@ -38,6 +38,13 @@ let volunteers = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [
     { id: '30', name: 'Daniel Ellis', email: 'daniel@example.com', role: 'VIP Escort', status: 'Approved' }
 ];
 
+const getVisibleVolunteers = () => {
+    if (userRole === 'admin') {
+        return volunteers;
+    }
+    return volunteers.filter(v => v.email === userEmail);
+};
+
 // Save state to localStorage
 const saveState = () => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(volunteers));
@@ -202,7 +209,8 @@ const renderTable = () => {
 
         tbody.innerHTML = '';
 
-        const filtered = volunteers.filter(v => {
+        const visible = getVisibleVolunteers();
+        const filtered = visible.filter(v => {
             const matchesSearch = v.name.toLowerCase().includes(search) || v.email.toLowerCase().includes(search);
             const matchesFilter = filter === 'All' || v.status === filter;
             return matchesSearch && matchesFilter;
@@ -276,10 +284,230 @@ const renderTable = () => {
 document.getElementById('searchInput').addEventListener('input', renderTable);
 document.getElementById('statusFilter').addEventListener('change', renderTable);
 
+// Theme Switcher for Dashboard
+const themeToggle = document.getElementById('themeToggle');
+const themeToggleIcon = document.getElementById('themeToggleIcon');
+if (themeToggle && themeToggleIcon) {
+    const updateThemeIcon = (theme) => {
+        if (theme === 'dark') {
+            themeToggleIcon.setAttribute('data-lucide', 'sun');
+        } else {
+            themeToggleIcon.setAttribute('data-lucide', 'moon');
+        }
+        if (window.lucide) lucide.createIcons({ root: themeToggle });
+    };
+
+    const currentTheme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    updateThemeIcon(currentTheme);
+
+    themeToggle.addEventListener('click', () => {
+        const isDark = document.documentElement.classList.toggle('dark');
+        const newTheme = isDark ? 'dark' : 'light';
+        localStorage.setItem('theme', newTheme);
+        updateThemeIcon(newTheme);
+        
+        // Update charts color dynamically
+        if (statusChartInstance && trendChartInstance) {
+            const color = newTheme === 'dark' ? '#94a3b8' : '#475569';
+            statusChartInstance.options.plugins.legend.labels.color = color;
+            trendChartInstance.options.scales.y.ticks.color = color;
+            trendChartInstance.options.scales.x.ticks.color = color;
+            trendChartInstance.options.scales.y.grid.color = newTheme === 'dark' ? '#334155' : '#e2e8f0';
+            statusChartInstance.update();
+            trendChartInstance.update();
+        }
+    });
+}
+
+// Chart.js Instances
+let statusChartInstance = null;
+let trendChartInstance = null;
+
+const renderCharts = () => {
+    const statusCanvas = document.getElementById('statusChart');
+    const trendCanvas = document.getElementById('trendChart');
+    if (!statusCanvas || !trendCanvas) return;
+
+    const visible = getVisibleVolunteers();
+    const approvedCount = visible.filter(v => v.status === 'Approved').length;
+    const pendingCount = visible.filter(v => v.status === 'Pending').length;
+    const rejectedCount = visible.filter(v => v.status === 'Rejected').length;
+
+    const currentTheme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    const textColor = currentTheme === 'dark' ? '#94a3b8' : '#475569';
+
+    // 1. Doughnut Chart
+    if (statusChartInstance) {
+        statusChartInstance.data.datasets[0].data = [approvedCount, pendingCount, rejectedCount];
+        statusChartInstance.update();
+    } else {
+        statusChartInstance = new Chart(statusCanvas, {
+            type: 'doughnut',
+            data: {
+                labels: ['Approved', 'Pending', 'Rejected'],
+                datasets: [{
+                    data: [approvedCount, pendingCount, rejectedCount],
+                    backgroundColor: ['#10b981', '#f59e0b', '#ef4444'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            color: textColor,
+                            font: { family: 'Inter', size: 12 }
+                        }
+                    }
+                },
+                cutout: '70%'
+            }
+        });
+    }
+
+    // 2. Trend Bar Chart
+    const roles = [...new Set(visible.map(v => v.role))].slice(0, 5);
+    const countsByRole = roles.map(r => visible.filter(v => v.role === r).length);
+
+    if (trendChartInstance) {
+        trendChartInstance.data.labels = roles;
+        trendChartInstance.data.datasets[0].data = countsByRole;
+        trendChartInstance.update();
+    } else {
+        trendChartInstance = new Chart(trendCanvas, {
+            type: 'bar',
+            data: {
+                labels: roles,
+                datasets: [{
+                    label: 'Registrations',
+                    data: countsByRole,
+                    backgroundColor: '#6366f1',
+                    borderRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: currentTheme === 'dark' ? '#334155' : '#e2e8f0' },
+                        ticks: { color: textColor }
+                    },
+                    x: {
+                        grid: { display: false },
+                        ticks: { color: textColor }
+                    }
+                },
+                plugins: {
+                    legend: { display: false }
+                }
+            }
+        });
+    }
+};
+
+const renderVolunteerGamification = () => {
+    const container = document.getElementById('dashboardAnalyticsContainer');
+    if (!container) return;
+
+    const visible = getVisibleVolunteers();
+    const approvedCount = visible.filter(v => v.status === 'Approved').length;
+    const pendingCount = visible.filter(v => v.status === 'Pending').length;
+
+    const impactScore = (approvedCount * 50) + (pendingCount * 10);
+    const targetScore = 200;
+    const percent = Math.min(Math.round((impactScore / targetScore) * 100), 100);
+    const dashoffset = 251.2 - (251.2 * percent) / 100;
+
+    const badge = impactScore >= 150 ? 'Gold Star' : (impactScore >= 50 ? 'Silver Helper' : 'Bronze Volunteer');
+    const badgeColor = impactScore >= 150 ? 'text-amber-500' : (impactScore >= 50 ? 'text-slate-400' : 'text-amber-700');
+
+    container.innerHTML = `
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Card 1: Impact Ring -->
+            <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6 flex flex-col md:flex-row items-center gap-6 h-auto md:h-[180px] transition-colors">
+                <div class="relative w-24 h-24 shrink-0 flex items-center justify-center">
+                    <svg class="w-full h-full transform -rotate-90">
+                        <circle cx="48" cy="48" r="40" stroke="#f1f5f9" stroke-width="8" fill="transparent" class="stroke-slate-100 dark:stroke-slate-700" />
+                        <circle cx="48" cy="48" r="40" stroke="#6366f1" stroke-width="8" fill="transparent" 
+                            stroke-dasharray="251.2" stroke-dashoffset="${dashoffset}" stroke-linecap="round" />
+                    </svg>
+                    <span class="absolute text-xl font-bold text-slate-800 dark:text-white">${percent}%</span>
+                </div>
+                <div class="flex-grow text-center md:text-left">
+                    <span class="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">Level Progress</span>
+                    <h3 class="text-lg font-bold text-slate-900 dark:text-white mt-1">Community Impact Score</h3>
+                    <p class="text-sm text-slate-500 dark:text-slate-400 mt-2">You have earned <span class="font-semibold text-indigo-600 dark:text-indigo-400">${impactScore}</span> impact points. Reach 200 points to level up!</p>
+                </div>
+            </div>
+
+            <!-- Card 2: Volunteer Badges -->
+            <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6 flex items-center gap-6 h-auto md:h-[180px] transition-colors">
+                <div class="w-16 h-16 rounded-full bg-indigo-50 dark:bg-slate-700/50 flex items-center justify-center shrink-0">
+                    <i data-lucide="award" class="w-8 h-8 ${badgeColor}"></i>
+                </div>
+                <div>
+                    <span class="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">Current Rank</span>
+                    <h3 class="text-lg font-bold text-slate-900 dark:text-white mt-1">${badge} Badge</h3>
+                    <p class="text-sm text-slate-500 dark:text-slate-400 mt-2">Rank is determined by approved shifts and registrations. Keep making a difference!</p>
+                </div>
+            </div>
+        </div>
+    `;
+
+    if (window.lucide) lucide.createIcons({ root: container });
+};
+
+const initializeAnalyticsContainer = () => {
+    const container = document.getElementById('dashboardAnalyticsContainer');
+    if (!container) return;
+
+    if (userRole === 'admin') {
+        container.innerHTML = `
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Chart 1 Card -->
+                <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6 flex flex-col h-[320px] transition-colors">
+                    <h3 class="text-sm font-semibold text-slate-900 dark:text-white mb-4">Registration Status Distribution</h3>
+                    <div class="relative flex-grow flex items-center justify-center min-h-0">
+                        <canvas id="statusChart"></canvas>
+                    </div>
+                </div>
+                <!-- Chart 2 Card -->
+                <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6 flex flex-col h-[320px] transition-colors">
+                    <h3 class="text-sm font-semibold text-slate-900 dark:text-white mb-4">Registration Trend Overview</h3>
+                    <div class="relative flex-grow min-h-0">
+                        <canvas id="trendChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        `;
+        renderCharts();
+    } else {
+        renderVolunteerGamification();
+    }
+};
+
 const updateDashboard = () => {
-    document.getElementById('stat-total').innerText = volunteers.length;
-    document.getElementById('stat-pending').innerText = volunteers.filter(v => v.status === 'Pending').length;
-    document.getElementById('stat-active').innerText = volunteers.filter(v => v.status === 'Approved').length;
+    const visible = getVisibleVolunteers();
+    document.getElementById('stat-total').innerText = visible.length;
+    document.getElementById('stat-pending').innerText = visible.filter(v => v.status === 'Pending').length;
+    document.getElementById('stat-active').innerText = visible.filter(v => v.status === 'Approved').length;
+    
+    // Update stats labels for volunteers dynamically
+    if (userRole !== 'admin') {
+        const totalLabel = document.getElementById('stat-total-label');
+        if (totalLabel) totalLabel.innerText = 'My Registrations';
+        const pendingLabel = document.getElementById('stat-pending-label');
+        if (pendingLabel) pendingLabel.innerText = 'My Pending';
+        const activeLabel = document.getElementById('stat-active-label');
+        if (activeLabel) activeLabel.innerText = 'My Approved';
+    }
+    
+    initializeAnalyticsContainer();
     renderTable();
 };
 

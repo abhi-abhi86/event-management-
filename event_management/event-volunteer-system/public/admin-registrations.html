@@ -9,7 +9,15 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script>
+        // Apply theme immediately on load to prevent flash
+        if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+
         tailwind.config = {
+            darkMode: 'class',
             theme: {
                 extend: {
                     fontFamily: {
@@ -36,11 +44,14 @@
                     <span class="font-bold text-xl tracking-tight">Event Volunteer Management System</span>
                 </a>
                 <div class="flex items-center gap-4 text-sm font-medium">
+                    <button id="themeToggle" class="p-2 rounded-full hover:bg-indigo-700 transition text-indigo-100 hover:text-white" title="Toggle Dark/Light Mode">
+                        <i id="themeToggleIcon" data-lucide="moon" class="w-5 h-5"></i>
+                    </button>
                     <a href="index.html" class="hover:text-indigo-200 transition hidden sm:block mr-2">Dashboard</a>
                     <a href="events.html" class="hover:text-indigo-200 transition hidden sm:block mr-2">Browse Events</a>
                     <button id="logoutBtn" class="text-sm font-medium text-indigo-100 hover:text-white bg-indigo-700/50 hover:bg-indigo-700 px-3 py-1.5 rounded-md transition mr-2">Logout</button>
                     <div class="w-8 h-8 rounded-full bg-indigo-400 border-2 border-indigo-300 overflow-hidden hidden sm:block">
-                        <img src="https://ui-avatars.com/api/?name=Admin+User&background=random" alt="Admin">
+                        <img id="navbarAvatar" src="https://ui-avatars.com/api/?name=Admin+User&background=random" alt="Admin">
                     </div>
                 </div>
             </div>
@@ -54,11 +65,16 @@
                 <h1 class="text-2xl font-bold text-slate-900">Volunteer Registrations</h1>
                 <p class="text-slate-500 text-sm mt-1">View all volunteers who have logged in and registered for events.</p>
             </div>
-            <div class="relative w-full max-w-md">
-                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <i data-lucide="search" class="w-4 h-4 text-slate-400"></i>
+            <div class="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
+                <div class="relative w-full max-w-md">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i data-lucide="search" class="w-4 h-4 text-slate-400"></i>
+                    </div>
+                    <input type="text" id="adminSearchInput" placeholder="Search by email or event..." class="pl-10 w-full rounded-lg border border-slate-300 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm bg-white dark:bg-slate-800 dark:border-slate-700">
                 </div>
-                <input type="text" id="adminSearchInput" placeholder="Search by email or event..." class="pl-10 w-full rounded-lg border border-slate-300 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm bg-white">
+                <button id="openRegisterModalBtn" class="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition shadow-sm font-medium text-sm w-full sm:w-auto shrink-0 justify-center">
+                    <i data-lucide="plus" class="w-4 h-4"></i> Add Registration
+                </button>
             </div>
         </div>
 
@@ -69,7 +85,9 @@
                         <tr class="bg-slate-50 border-b border-slate-200 text-sm text-slate-500 uppercase tracking-wider">
                             <th class="px-6 py-4 font-medium">Email</th>
                             <th class="px-6 py-4 font-medium">Registered Event</th>
-                            <th class="px-6 py-4 font-medium text-right">Registration Date</th>
+                            <th class="px-6 py-4 font-medium">Status</th>
+                            <th class="px-6 py-4 font-medium">Registration Date</th>
+                            <th class="px-6 py-4 font-medium text-right">Actions</th>
                         </tr>
                     </thead>
                     <tbody id="registrationsTableBody" class="divide-y divide-slate-100 text-sm">
@@ -80,8 +98,68 @@
         </div>
     </main>
 
+    <!-- Registration Modal -->
+    <div id="registerModal" class="fixed inset-0 z-50 hidden bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 opacity-0 transition-opacity duration-200">
+        <div class="bg-white dark:bg-slate-800 rounded-xl shadow-xl w-full max-w-lg overflow-hidden transform scale-95 transition-transform duration-200" id="registerModalContent">
+            <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between">
+                <h3 class="text-lg font-bold text-slate-900 dark:text-white">Add New Event Registration</h3>
+                <button id="closeRegisterModalBtn1" class="text-slate-400 hover:text-slate-600 transition"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <form id="registerForm" class="p-6">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Volunteer Email</label>
+                        <input type="email" id="regEmail" required class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm placeholder:text-slate-400" placeholder="volunteer@example.com">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Select Event</label>
+                        <select id="regEvent" required class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm bg-white dark:bg-slate-900">
+                            <option value="" disabled selected>Select an event...</option>
+                            <option value="Community Park Cleanup">Community Park Cleanup</option>
+                            <option value="Local Food Drive">Local Food Drive</option>
+                            <option value="Marathon Route Guide">Marathon Route Guide</option>
+                            <option value="Tech Conference Helper">Tech Conference Helper</option>
+                            <option value="Charity Gala Assistant">Charity Gala Assistant</option>
+                            <option value="Animal Shelter Support">Animal Shelter Support</option>
+                            <option value="Youth Sports Day">Youth Sports Day</option>
+                            <option value="Neighborhood Block Party">Neighborhood Block Party</option>
+                            <option value="Beach Restoration">Beach Restoration</option>
+                            <option value="Library Reading Buddy">Library Reading Buddy</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Registration Date</label>
+                        <input type="date" id="regDate" required class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Status</label>
+                        <select id="regStatus" required class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm bg-white dark:bg-slate-900">
+                            <option value="Pending" selected>Pending</option>
+                            <option value="Approved">Approved</option>
+                            <option value="Rejected">Rejected</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="mt-8 flex justify-end gap-3">
+                    <button type="button" id="closeRegisterModalBtn2" class="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition">Cancel</button>
+                    <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 shadow-sm transition">Save Registration</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
         lucide.createIcons();
+
+        // Dynamic Avatar Update
+        const adminEmail = localStorage.getItem('userEmail') || 'Admin';
+        const nameParts = adminEmail.split('@')[0].split(/[\.\-_]/);
+        const adminName = nameParts.map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(' ');
+        const navbarAvatar = document.getElementById('navbarAvatar');
+        if (navbarAvatar) {
+            navbarAvatar.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(adminName)}&background=random`;
+            navbarAvatar.alt = adminName;
+        }
 
         // Logout Script
         document.getElementById('logoutBtn').addEventListener('click', () => {
@@ -97,18 +175,87 @@
         function renderTable(data) {
             tbody.innerHTML = '';
             if (data.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="3" class="px-6 py-8 text-center text-slate-500">No registrations found matching your search.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-8 text-center text-slate-500">No registrations found matching your search.</td></tr>`;
                 return;
             }
-            data.forEach(vol => {
+            data.forEach((vol, index) => {
                 const tr = document.createElement('tr');
-                tr.className = 'hover:bg-slate-50 transition-colors bg-white';
-                tr.innerHTML = `<td class="px-6 py-4 font-medium text-slate-900">${vol.email}</td><td class="px-6 py-4"><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">${vol.eventTitle}</span></td><td class="px-6 py-4 text-slate-500 text-right">${vol.date}</td>`;
+                tr.className = 'hover:bg-slate-50 transition-colors bg-white group';
+                
+                const status = vol.status || 'Pending';
+                let statusClass = '';
+                if (status === 'Approved') statusClass = 'bg-emerald-50 text-emerald-700 ring-emerald-600/20';
+                else if (status === 'Pending') statusClass = 'bg-amber-50 text-amber-700 ring-amber-600/20';
+                else statusClass = 'bg-red-50 text-red-700 ring-red-600/20';
+
+                // Find original index in vols array (since vols is reversed)
+                const originalIndex = vols.length - 1 - index;
+
+                tr.innerHTML = `
+                    <td class="px-6 py-4 font-medium text-slate-900">${vol.email}</td>
+                    <td class="px-6 py-4">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+                            ${vol.eventTitle}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4">
+                        <span class="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset ${statusClass}">
+                            ${status}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 text-slate-500">${vol.date}</td>
+                    <td class="px-6 py-4 text-right text-sm font-medium">
+                        <div class="flex items-center justify-end gap-2">
+                            ${status !== 'Approved' ? `
+                                <button data-action="approve" data-index="${originalIndex}" class="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg transition" title="Approve">
+                                    <i data-lucide="check" class="w-4 h-4"></i>
+                                </button>
+                            ` : ''}
+                            ${status !== 'Rejected' ? `
+                                <button data-action="reject" data-index="${originalIndex}" class="p-1.5 text-amber-600 hover:bg-amber-50 rounded-lg transition" title="Reject">
+                                    <i data-lucide="x" class="w-4 h-4"></i>
+                                </button>
+                            ` : ''}
+                            <button data-action="delete" data-index="${originalIndex}" class="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition" title="Delete">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </td>
+                `;
                 tbody.appendChild(tr);
             });
+            lucide.createIcons({ root: tbody });
         }
 
         renderTable(vols);
+
+        // Actions Handler
+        tbody.addEventListener('click', (e) => {
+            const button = e.target.closest('button');
+            if (!button) return;
+
+            const index = parseInt(button.dataset.index);
+            const action = button.dataset.action;
+
+            if (action === 'approve') {
+                vols[index].status = 'Approved';
+                const originalOrder = [...vols].reverse();
+                localStorage.setItem('registeredVolunteers', JSON.stringify(originalOrder));
+                renderTable(vols);
+            } else if (action === 'reject') {
+                vols[index].status = 'Rejected';
+                const originalOrder = [...vols].reverse();
+                localStorage.setItem('registeredVolunteers', JSON.stringify(originalOrder));
+                renderTable(vols);
+            } else if (action === 'delete') {
+                if (confirm('Are you sure you want to remove this registration?')) {
+                    vols.splice(index, 1);
+                    const originalOrder = [...vols].reverse();
+                    localStorage.setItem('registeredVolunteers', JSON.stringify(originalOrder));
+                    renderTable(vols);
+                }
+            }
+        });
 
         // Search functionality
         document.getElementById('adminSearchInput').addEventListener('input', (e) => {
@@ -118,6 +265,92 @@
                 vol.eventTitle.toLowerCase().includes(searchTerm)
             );
             renderTable(filteredVols);
+        });
+
+        // Modal functions
+        const openModal = (id) => {
+            const modal = document.getElementById(id);
+            const content = modal.firstElementChild;
+            modal.classList.remove('hidden');
+            void modal.offsetWidth;
+            modal.classList.remove('opacity-0');
+            content.classList.remove('scale-95');
+        };
+
+        const closeModal = (id) => {
+            const modal = document.getElementById(id);
+            const content = modal.firstElementChild;
+            modal.classList.add('opacity-0');
+            content.classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 200);
+        };
+
+        // Event listeners for modal
+        document.getElementById('openRegisterModalBtn').addEventListener('click', () => {
+            document.getElementById('regDate').value = new Date().toISOString().split('T')[0];
+            openModal('registerModal');
+        });
+        document.getElementById('closeRegisterModalBtn1').addEventListener('click', () => closeModal('registerModal'));
+        document.getElementById('closeRegisterModalBtn2').addEventListener('click', () => closeModal('registerModal'));
+
+        // Handle outside click to close modal
+        window.addEventListener('click', (e) => {
+            if (e.target.id === 'registerModal') closeModal('registerModal');
+        });
+
+        // Form submission
+        document.getElementById('registerForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const email = document.getElementById('regEmail').value.trim();
+            const eventTitle = document.getElementById('regEvent').value;
+            const dateInput = document.getElementById('regDate').value;
+            const status = document.getElementById('regStatus').value;
+
+            const dateParts = dateInput.split('-');
+            const formattedDate = `${dateParts[1]}/${dateParts[2]}/${dateParts[0]}`;
+
+            if (email && eventTitle && formattedDate && status) {
+                const originalOrder = [...vols].reverse();
+                originalOrder.push({
+                    email,
+                    eventTitle,
+                    date: formattedDate,
+                    status
+                });
+                
+                localStorage.setItem('registeredVolunteers', JSON.stringify(originalOrder));
+                
+                vols = [...originalOrder].reverse();
+                renderTable(vols);
+                
+                closeModal('registerModal');
+                e.target.reset();
+            }
+        });
+
+        // Theme switching logic
+        const themeToggle = document.getElementById('themeToggle');
+        const themeToggleIcon = document.getElementById('themeToggleIcon');
+
+        const updateThemeIcon = (theme) => {
+            if (theme === 'dark') {
+                themeToggleIcon.setAttribute('data-lucide', 'sun');
+            } else {
+                themeToggleIcon.setAttribute('data-lucide', 'moon');
+            }
+            if (window.lucide) lucide.createIcons({ root: themeToggle });
+        };
+
+        const currentTheme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        updateThemeIcon(currentTheme);
+
+        themeToggle.addEventListener('click', () => {
+            const isDark = document.documentElement.classList.toggle('dark');
+            const newTheme = isDark ? 'dark' : 'light';
+            localStorage.setItem('theme', newTheme);
+            updateThemeIcon(newTheme);
         });
     </script>
 </body>

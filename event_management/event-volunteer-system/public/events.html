@@ -9,7 +9,15 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script>
+        // Apply theme immediately on load to prevent flash
+        if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+
         tailwind.config = {
+            darkMode: 'class',
             theme: {
                 extend: {
                     fontFamily: {
@@ -31,9 +39,14 @@
                     <i data-lucide="tent" class="w-6 h-6"></i>
                     <span class="font-bold text-xl tracking-tight">Event Volunteer Management System</span>
                 </a>
-                <div class="flex items-center gap-4 text-sm font-medium">
-                    <a href="login.html" class="hover:text-indigo-200 transition">Login</a>
-                    <a href="login.html" class="bg-white text-indigo-600 px-4 py-2 rounded-lg shadow-sm hover:bg-indigo-50 transition">Sign Up</a>
+                <div class="flex items-center gap-2">
+                    <button id="themeToggle" class="p-2 rounded-full hover:bg-indigo-700 transition text-indigo-100 hover:text-white mr-1" title="Toggle Dark/Light Mode">
+                        <i id="themeToggleIcon" data-lucide="moon" class="w-5 h-5"></i>
+                    </button>
+                    <div id="navbarAuthLinks" class="flex items-center gap-4 text-sm font-medium">
+                        <a href="login.html" class="hover:text-indigo-200 transition">Login</a>
+                        <a href="login.html" class="bg-white text-indigo-600 px-4 py-2 rounded-lg shadow-sm hover:bg-indigo-50 transition">Sign Up</a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -162,6 +175,55 @@
         });
 
         lucide.createIcons();
+
+        // Dynamic Navbar Auth State
+        const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+        const userRole = localStorage.getItem('userRole');
+        const userEmail = localStorage.getItem('userEmail') || '';
+
+        if (isLoggedIn) {
+            const nameParts = userEmail.split('@')[0].split(/[\.\-_]/);
+            const userName = nameParts.map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(' ');
+            const authContainer = document.getElementById('navbarAuthLinks');
+            
+            authContainer.innerHTML = `
+                <a href="index.html" class="hover:text-indigo-200 transition mr-2">Dashboard</a>
+                ${userRole === 'admin' ? '<a href="admin-registrations.html" class="hover:text-indigo-200 transition mr-2">View Registrations</a>' : ''}
+                <button id="logoutBtn" class="text-sm font-medium text-indigo-100 hover:text-white bg-indigo-700/50 hover:bg-indigo-700 px-3 py-1.5 rounded-md transition mr-2">Logout</button>
+                <div class="w-8 h-8 rounded-full bg-indigo-400 border-2 border-indigo-300 overflow-hidden">
+                    <img id="navbarAvatar" src="https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=random" alt="${userName}">
+                </div>
+            `;
+
+            // Bind logout functionality
+            document.getElementById('logoutBtn').addEventListener('click', () => {
+                localStorage.removeItem('isLoggedIn');
+                window.location.reload();
+            });
+        }
+
+        // Theme switching logic
+        const themeToggle = document.getElementById('themeToggle');
+        const themeToggleIcon = document.getElementById('themeToggleIcon');
+
+        const updateThemeIcon = (theme) => {
+            if (theme === 'dark') {
+                themeToggleIcon.setAttribute('data-lucide', 'sun');
+            } else {
+                themeToggleIcon.setAttribute('data-lucide', 'moon');
+            }
+            if (window.lucide) lucide.createIcons({ root: themeToggle });
+        };
+
+        const currentTheme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        updateThemeIcon(currentTheme);
+
+        themeToggle.addEventListener('click', () => {
+            const isDark = document.documentElement.classList.toggle('dark');
+            const newTheme = isDark ? 'dark' : 'light';
+            localStorage.setItem('theme', newTheme);
+            updateThemeIcon(newTheme);
+        });
     </script>
 </body>
 

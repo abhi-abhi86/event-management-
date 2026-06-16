@@ -4,6 +4,11 @@ body {
     background-color: #f8fafc; 
 }
 
+/* Smooth theme transition */
+* {
+    transition: background-color 200ms ease, border-color 200ms ease, text-color 200ms ease;
+}
+
 /* Toast Animations */
 .toast-enter { 
     transform: translateY(100%); 
@@ -49,4 +54,90 @@ body {
 }
 ::-webkit-scrollbar-thumb:hover { 
     background: #94a3b8; 
+}
+
+/* Dark Mode Overrides */
+html.dark body {
+    background-color: #0f172a; /* Slate 900 */
+    color: #e2e8f0; /* Slate 200 */
+}
+
+html.dark nav {
+    background-color: #1e1b4b !important; /* Indigo 950 */
+}
+
+/* Headings and Texts */
+html.dark h1, html.dark h2, html.dark h3, html.dark h4, html.dark .text-slate-900 {
+    color: #f8fafc !important; /* Slate 50 */
+}
+
+html.dark p, html.dark .text-slate-500, html.dark .text-slate-700 {
+    color: #94a3b8 !important; /* Slate 400 */
+}
+
+/* Cards & Tables */
+html.dark .bg-white, html.dark .bg-slate-50, html.dark .bg-slate-100 {
+    background-color: #1e293b !important; /* Slate 800 */
+}
+
+html.dark tr.bg-slate-50, html.dark thead tr {
+    background-color: #0f172a !important; /* Slate 900 */
+}
+
+html.dark .border, 
+html.dark .border-slate-200, 
+html.dark .border-slate-300, 
+html.dark .border-slate-100,
+html.dark .border-b,
+html.dark .divide-y > :not([hidden]) ~ :not([hidden]) {
+    border-color: #334155 !important; /* Slate 700 */
+}
+
+/* Table hover */
+html.dark tr:hover {
+    background-color: #334155 !important; /* Slate 700 */
+}
+
+/* Inputs and Selects */
+html.dark input, html.dark select, html.dark textarea {
+    background-color: #0f172a !important; /* Slate 900 */
+    border-color: #334155 !important; /* Slate 700 */
+    color: #f8fafc !important; /* Slate 50 */
+}
+
+html.dark input::placeholder {
+    color: #475569 !important; /* Slate 600 */
+}
+
+/* Buttons */
+html.dark button.bg-white, html.dark a.bg-white {
+    background-color: #334155 !important; /* Slate 700 */
+    color: #f8fafc !important;
+    border-color: #475569 !important;
+}
+
+html.dark button.bg-white:hover, html.dark a.bg-white:hover {
+    background-color: #475569 !important;
+}
+
+/* Volunteer list highlighted current user row */
+html.dark tr.bg-indigo-50\/60 {
+    background-color: rgba(99, 102, 241, 0.15) !important;
+}
+html.dark tr.bg-indigo-50\/60:hover {
+    background-color: rgba(99, 102, 241, 0.25) !important;
+}
+
+/* Tab button active state */
+html.dark #tab-volunteer.bg-white, html.dark #tab-admin.bg-white {
+    background-color: #334155 !important;
+    color: #f8fafc !important;
+}
+
+/* Scrollbar dark mode styles */
+html.dark ::-webkit-scrollbar-thumb { 
+    background: #475569; 
+}
+html.dark ::-webkit-scrollbar-thumb:hover { 
+    background: #64748b; 
 }

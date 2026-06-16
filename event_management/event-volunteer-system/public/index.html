@@ -11,12 +11,23 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
+    <!-- Chart.js CDN for Analytics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
     <!-- Custom Styles -->
     <link rel="stylesheet" href="/css/style.css">
 
     <!-- Tailwind Config -->
     <script>
+        // Apply theme immediately on load to prevent flash
+        if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+
         tailwind.config = {
+                darkMode: 'class',
                 theme: {
                     extend: {
                         fontFamily: {
@@ -46,6 +57,16 @@
         // --- Frontend-only simulation of admin permissions ---
         // This part needs a backend for real security.
         document.addEventListener('DOMContentLoaded', () => {
+            const email = localStorage.getItem('userEmail') || 'User';
+            const nameParts = email.split('@')[0].split(/[\.\-_]/);
+            const name = nameParts.map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(' ');
+
+            const navbarAvatar = document.getElementById('navbarAvatar');
+            if (navbarAvatar) {
+                navbarAvatar.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random`;
+                navbarAvatar.alt = name;
+            }
+
             if (userRole !== 'admin') {
                 // Hide admin-specific buttons
                 const adminButtons = document.querySelectorAll('#exportCsvBtn, #openRegisterModalBtn, #adminRegLink');
@@ -55,9 +76,14 @@
                 const actionsHeader = document.getElementById('actionsHeader');
                 if (actionsHeader) actionsHeader.style.display = 'none';
 
-                // Update the dashboard subtitle for volunteers
+                // Update the dashboard title and subtitle for volunteers
+                const dashboardTitle = document.getElementById('dashboardTitle');
+                if (dashboardTitle) dashboardTitle.innerText = 'Volunteer Dashboard';
                 const dashboardSubtitle = document.getElementById('dashboardSubtitle');
                 if (dashboardSubtitle) dashboardSubtitle.innerText = 'View upcoming shifts and volunteer status.';
+            } else {
+                const dashboardTitle = document.getElementById('dashboardTitle');
+                if (dashboardTitle) dashboardTitle.innerText = 'Admin Dashboard';
             }
         });
     </script>
@@ -73,12 +99,15 @@
                     <span class="font-bold text-xl tracking-tight">Event Volunteer Management System</span>
                 </a>
                 <div class="flex items-center gap-4">
+                    <button id="themeToggle" class="p-2 rounded-full hover:bg-indigo-700 transition text-indigo-100 hover:text-white" title="Toggle Dark/Light Mode">
+                        <i id="themeToggleIcon" data-lucide="moon" class="w-5 h-5"></i>
+                    </button>
                     <a href="events.html" class="text-sm font-medium hover:text-indigo-200 transition hidden sm:block mr-2">Browse Events</a>
                     <a href="admin-registrations.html" id="adminRegLink" class="text-sm font-medium hover:text-indigo-200 transition hidden sm:block mr-2">View Registrations</a>
                     <button id="logoutBtn" class="text-sm font-medium text-indigo-100 hover:text-white bg-indigo-700/50 hover:bg-indigo-700 px-3 py-1.5 rounded-md transition mr-2">Logout</button>
                     <button class="p-2 rounded-full hover:bg-indigo-700 transition"><i data-lucide="bell" class="w-5 h-5"></i></button>
                     <div class="w-8 h-8 rounded-full bg-indigo-400 border-2 border-indigo-300 overflow-hidden">
-                        <img src="https://ui-avatars.com/api/?name=Admin+User&background=random" alt="Admin">
+                        <img id="navbarAvatar" src="https://ui-avatars.com/api/?name=Admin+User&background=random" alt="Admin">
                     </div>
                 </div>
             </div>
@@ -89,7 +118,7 @@
     <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
             <div>
-                <h1 class="text-2xl font-bold text-slate-900">Volunteer Dashboard</h1>
+                <h1 id="dashboardTitle" class="text-2xl font-bold text-slate-900">Volunteer Dashboard</h1>
                 <p id="dashboardSubtitle" class="text-slate-500 text-sm mt-1">Manage event volunteers, shifts, and approvals.</p>
             </div>
             <div class="flex items-center gap-3">
@@ -109,7 +138,7 @@
                     <i data-lucide="users" class="w-6 h-6"></i>
                 </div>
                 <div>
-                    <p class="text-sm font-medium text-slate-500">Total Volunteers</p>
+                    <p id="stat-total-label" class="text-sm font-medium text-slate-500">Total Volunteers</p>
                     <h3 class="text-2xl font-bold text-slate-900" id="stat-total">0</h3>
                 </div>
             </div>
@@ -119,7 +148,7 @@
                     <i data-lucide="clock" class="w-6 h-6"></i>
                 </div>
                 <div>
-                    <p class="text-sm font-medium text-slate-500">Pending Approvals</p>
+                    <p id="stat-pending-label" class="text-sm font-medium text-slate-500">Pending Approvals</p>
                     <h3 class="text-2xl font-bold text-slate-900" id="stat-pending">0</h3>
                 </div>
             </div>
@@ -129,10 +158,15 @@
                     <i data-lucide="calendar-check" class="w-6 h-6"></i>
                 </div>
                 <div>
-                    <p class="text-sm font-medium text-slate-500">Active Shifts</p>
+                    <p id="stat-active-label" class="text-sm font-medium text-slate-500">Active Shifts</p>
                     <h3 class="text-2xl font-bold text-slate-900" id="stat-active">0</h3>
                 </div>
             </div>
+        </div>
+
+        <!-- Analytics / Gamification Container -->
+        <div id="dashboardAnalyticsContainer" class="mb-8">
+            <!-- Rendered dynamically by app.js based on role -->
         </div>
 
         <!-- Table Controls -->
